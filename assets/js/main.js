@@ -158,13 +158,14 @@
 
   })();
 
+
+  // Vars.
+  var $form = document.querySelectorAll('#signup-form')[0],
+    $submit = document.querySelectorAll('#signup-form input[type="submit"]')[0],
+    $message;
+
   // Signup Form.
   (function () {
-
-    // Vars.
-    var $form = document.querySelectorAll('#signup-form')[0],
-      $submit = document.querySelectorAll('#signup-form input[type="submit"]')[0],
-      $message;
 
     // Bail if addEventListener isn't supported.
     if (!('addEventListener' in $form))
@@ -209,43 +210,78 @@
       // but there's enough here to piece together a working AJAX submission call that does.
       submitURL();
 
-
-
-      window.setTimeout(function () {
-
-        // Reset form.
-        $form.reset();
-
-        // Enable submit.
-        $submit.disabled = false;
-
-        // Show message.
-        $message._show('success', 'Thank you!');
-        //$message._show('failure', 'Something went wrong. Please try again.');
-
-      }, 750);
-
     });
 
   })();
 
 
-  function submitURL(){
+  function submitURL() {
     var $value = document.querySelectorAll('#signup-form input[type="text"]')[0];
     console.log($value.value);
     $.ajax({
       method: 'POST',
-      url: 'http://short-link.hsexpert.net/api/url',
-      data: {
+      url: 'https://short-link.hsexpert.net/api/url',
+      data: JSON.stringify({
         "original_url": $value.value
+      }),
+      contentType: 'application/json',
+
+      success: (result) => {
+        console.log(result);
+
+        window.setTimeout(function () {
+          // Reset form.
+          $form.reset();
+          // Enable submit.
+          $submit.disabled = false;
+          // Show message.
+          $message._show('success', 'Thank you!');
+          //$message._show('failure', 'Something went wrong. Please try again.');
+          showResult(result);
+
+        }, 750);
+
       },
-      contentType: 'application/json'
-    })
-    .done((result)=>{
-      console.log(result);
-    })
+
+      error: () => {
+        window.setTimeout(function () {
+          // Reset form.
+          $form.reset();
+          // Enable submit.
+          $submit.disabled = false;
+          // Show message.
+          $message._show('failure', 'Something went wrong. Please try again.');
+        }, 750);
+      }
+    });
+  }
+
+  function showResult(data) {
+    var base = 'https://short-link.hsexpert.net';
+
+    // hide
+    $('#header').css('display', 'none');
+    $('#signup-form').css('display', 'none');
+
+    //show
+    $('#result')[0].innerHTML = `
+    <h2>原始連結：` + data.original_url + `</h2>
+    <img src="` + base + data.screenshot + `" width="500px" alt="">
+    <br>
+    <h2>
+    縮網址：
+    <a href="` + base + '/' + data.shortened_url + `">` + base + '/' + data.shortened_url + `</a>
+    </h2>
+    <button class="btn btn-success" onclick="resetResult()">Reset</button>
+    `
   }
 
 })();
 
 
+function resetResult(){
+  $('#result')[0].innerHTML = '';
+  // show
+  $('#header').css('display', 'block');
+  $('#signup-form').css('display', 'flex');
+}
